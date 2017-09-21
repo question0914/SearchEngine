@@ -30,7 +30,7 @@ public class MyCrawler extends WebCrawler {
     public boolean shouldVisit(Page referringPage, WebURL url) {
         String href = url.getURL().toLowerCase();
         return !FILTERS.matcher(href).matches()
-                && href.startsWith("http://www.viterbi.usc.edu/");
+                && href.startsWith("http://http://www.nydailynews.com/");
     }
 
     @Override
