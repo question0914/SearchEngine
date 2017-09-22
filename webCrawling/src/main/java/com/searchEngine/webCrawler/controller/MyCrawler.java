@@ -5,6 +5,9 @@ import edu.uci.ics.crawler4j.crawler.WebCrawler;
 import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -12,8 +15,44 @@ import java.util.regex.Pattern;
  * Created by zijianli on 9/20/17.
  */
 public class MyCrawler extends WebCrawler {
-    private final static Pattern FILTERS = Pattern.compile(".*(\\.(css|js|gif|jpg"
-            + "|png|mp3|mp3|zip|gz))$");
+    private final static Pattern MATCH = Pattern.compile(".*(\\.(html|doc|pdf|gif|jpg|jpeg|png|bmp))$");
+    /*No extension*/
+    private final static Pattern NO_EXTENSION = Pattern.compile("(^$|.*\\/[^(\\/\\.)]*$)");
+    String crawlStorageFolder = "data/crawl/";
+    String fetchFile = "fetch_nydailynews.csv";
+    String visitFile = "visit_nydailynews.csv";
+    String urlsFile = "urls_nydailynews.csv";
+
+
+
+    /**
+     * This function is called once the header of a page is fetched. It can be
+     * overridden by sub-classes to perform custom logic for different status
+     * codes. For example, 404 pages can be logged, etc.
+     *
+     * @param webUrl WebUrl containing the statusCode
+     * @param statusCode Html Status Code number
+     * @param statusDescription Html Status COde description
+     */
+    @Override
+    protected void handlePageStatusCode(WebURL webUrl, int statusCode, String statusDescription) {
+        // Do nothing by default
+        // Sub-classed can override this to add their custom functionality
+        String url = webUrl.getURL().toLowerCase();
+        if(url.startsWith("http://" + Controller.targetSite) || url.startsWith("https://" + Controller.targetSite)){
+            try{
+                synchronized(this){
+                    BufferedWriter bw = new BufferedWriter(new FileWriter(crawlStorageFolder+fetchFile,true));
+                    bw.write(webUrl.getURL().replace(",", "_")+","+statusCode+"\n");
+                    bw.close();
+                }
+            } catch(IOException e){
+                e.printStackTrace();
+            }
+        }
+
+
+    }
 
     /**
      * This method receives two parameters. The first parameter is the page
@@ -29,8 +68,22 @@ public class MyCrawler extends WebCrawler {
 
     public boolean shouldVisit(Page referringPage, WebURL url) {
         String href = url.getURL().toLowerCase();
-        return !FILTERS.matcher(href).matches()
-                && href.startsWith("https://www.washingtonpost.com/");
+        try{
+            synchronized(this){
+                BufferedWriter bw = new BufferedWriter(new FileWriter(crawlStorageFolder+urlsFile, true));
+                if(href.startsWith("http://"+Controller.targetSite) || href.startsWith("https://" +Controller.targetSite))
+                    bw.write(url.getURL().replace(",", "_") + ", OK\n");
+                else
+                    bw.write(url.getURL().replace(",", "_")+ ", N_OK\n");
+                bw.close();
+            }
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+        if(NO_EXTENSION.matcher(href).matches())
+            return true;
+        return (href.startsWith("http://"+Controller.targetSite) || (href.startsWith("https://"+Controller.targetSite)))
+                && MATCH.matcher(href).matches();
     }
 
     @Override
