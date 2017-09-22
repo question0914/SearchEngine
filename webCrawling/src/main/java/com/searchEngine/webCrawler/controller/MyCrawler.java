@@ -38,20 +38,16 @@ public class MyCrawler extends WebCrawler {
     protected void handlePageStatusCode(WebURL webUrl, int statusCode, String statusDescription) {
         // Do nothing by default
         // Sub-classed can override this to add their custom functionality
-        String url = webUrl.getURL().toLowerCase();
-        if(url.startsWith("http://" + Controller.targetSite) || url.startsWith("https://" + Controller.targetSite)){
-            try{
-                synchronized(this){
-                    BufferedWriter bw = new BufferedWriter(new FileWriter(crawlStorageFolder+fetchFile,true));
-                    bw.write(webUrl.getURL().replace(",", "_")+","+statusCode+"\n");
-                    bw.close();
+//        String url = webUrl.getURL().toLowerCase();
+        try{
+            synchronized(this){
+                BufferedWriter bw = new BufferedWriter(new FileWriter(crawlStorageFolder+fetchFile,true));
+                bw.write(webUrl.getURL().replace(",", "_")+","+statusCode+"\n");
+                bw.close();
                 }
             } catch(IOException e){
                 e.printStackTrace();
             }
-        }
-
-
     }
 
     /**
@@ -80,6 +76,8 @@ public class MyCrawler extends WebCrawler {
         }catch(IOException e){
             e.printStackTrace();
         }
+        if(!(href.startsWith("http://"+Controller.targetSite) || (href.startsWith("https://"+Controller.targetSite))))
+            return false;
         if(NO_EXTENSION.matcher(href).matches())
             return true;
         return (href.startsWith("http://"+Controller.targetSite) || (href.startsWith("https://"+Controller.targetSite)))
@@ -90,14 +88,28 @@ public class MyCrawler extends WebCrawler {
     public void visit(Page page) {
         String url = page.getWebURL().getURL();
         System.out.println("URL: " + url);
-        if (page.getParseData() instanceof HtmlParseData) {
-            HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
-            String text = htmlParseData.getText();
-            String html = htmlParseData.getHtml();
-            Set<WebURL> links = htmlParseData.getOutgoingUrls();
-            System.out.println("Text length: " + text.length());
-            System.out.println("Html length: " + html.length());
-            System.out.println("Number of outgoing links: " + links.size());
+        int size = page.getContentData().length;
+        int numOfOutlink = page.getParseData().getOutgoingUrls().size();
+        String contentType = page.getContentType();
+        contentType = contentType.toLowerCase().indexOf("text/html") > -1 ? "text/html":contentType;
+        try{
+            synchronized (this){
+                BufferedWriter bw = new BufferedWriter(new FileWriter(crawlStorageFolder + visitFile, true));
+                bw.write(url.replace(",", "_") + "," + size + "," + numOfOutlink + "," + contentType +"\n");
+                bw.close();
+                System.out.println(crawlStorageFolder + visitFile);
+            }
+        }catch(IOException e){
+            e.printStackTrace();
         }
+//        if (page.getParseData() instanceof HtmlParseData) {
+//            HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
+//            String text = htmlParseData.getText();
+//            String html = htmlParseData.getHtml();
+//            Set<WebURL> links = htmlParseData.getOutgoingUrls();
+//            System.out.println("Text length: " + text.length());
+//            System.out.println("Html length: " + html.length());
+//            System.out.println("Number of outgoing links: " + links.size());
+//        }
     }
 }

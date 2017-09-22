@@ -14,7 +14,7 @@ import java.io.IOException;
  * Created by zijianli on 9/20/17.
  */
 public class Controller {
-    public final static String targetSite = "www.nydailynews.com";
+    public final static String targetSite = "www.nydailynews.com/";
     public static void main(String[] args) throws Exception {
         String crawlStorageFolder = "data/crawl/";
         String fetchFile = "fetch_nydailynews.csv";
@@ -26,13 +26,13 @@ public class Controller {
         int numberOfCrawlers = 4;
         int maxPagesToFetch = 20000;
         int maxDepthOfCrawling = 16;
-        int politeDelay = 2500;
+        int politeDelay = 500;
 
         CrawlConfig config = new CrawlConfig();
         config.setCrawlStorageFolder(crawlStorageFolder);
         config.setMaxPagesToFetch(maxPagesToFetch);
         config.setMaxDepthOfCrawling(maxDepthOfCrawling);
-        //config.setPolitenessDelay(politeDelay);
+        config.setPolitenessDelay(politeDelay);
         config.setIncludeHttpsPages(true);
         config.setFollowRedirects(true);
         config.setIncludeBinaryContentInCrawling(true);
