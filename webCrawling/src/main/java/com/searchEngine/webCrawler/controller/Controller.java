@@ -23,16 +23,16 @@ public class Controller {
 
 
         /*Basic configuration of the crawler*/
-        int numberOfCrawlers = 4;
+        int numberOfCrawlers = 7;
         int maxPagesToFetch = 20000;
         int maxDepthOfCrawling = 16;
-        int politeDelay = 500;
+        int politeDelay = 1000;
 
         CrawlConfig config = new CrawlConfig();
         config.setCrawlStorageFolder(crawlStorageFolder);
         config.setMaxPagesToFetch(maxPagesToFetch);
         config.setMaxDepthOfCrawling(maxDepthOfCrawling);
-        config.setPolitenessDelay(politeDelay);
+        //config.setPolitenessDelay(politeDelay);
         config.setIncludeHttpsPages(true);
         config.setFollowRedirects(true);
         config.setIncludeBinaryContentInCrawling(true);
@@ -42,7 +42,7 @@ public class Controller {
  /* Instantiate the controller for this crawl.*/
         PageFetcher pageFetcher = new PageFetcher(config);
         RobotstxtConfig robotstxtConfig = new RobotstxtConfig();
-        robotstxtConfig.setEnabled(false);
+        //robotstxtConfig.setEnabled(false);
         RobotstxtServer robotstxtServer = new RobotstxtServer(robotstxtConfig, pageFetcher);
         CrawlController controller = new CrawlController(config, pageFetcher, robotstxtServer);
 /*Create storage file*/
@@ -61,6 +61,8 @@ public class Controller {
         }catch (IOException e){
             e.printStackTrace();
         }
+
+
  /* For each crawl, you need to add some seed urls. These are the first
  * URLs that are fetched and then the crawler starts following links
  * which are found in these pages */
@@ -68,5 +70,6 @@ public class Controller {
  /* Start the crawl. This is a blocking operation, meaning that your code
  * will reach the line after this only when crawling is finished. */
         controller.start(MyCrawler.class, numberOfCrawlers);
+        System.out.println("Fethced attemps: "+MyCrawler.count);
     }
 }

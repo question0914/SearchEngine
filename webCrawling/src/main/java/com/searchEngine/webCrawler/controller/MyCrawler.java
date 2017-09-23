@@ -16,12 +16,14 @@ import java.util.regex.Pattern;
  */
 public class MyCrawler extends WebCrawler {
     private final static Pattern MATCH = Pattern.compile(".*(\\.(html|doc|pdf|gif|jpg|jpeg|png|bmp))$");
+    private final static Pattern FILTERS = Pattern.compile(".*((css|rss|js|mp3|zip|gz|vcf|xml)).*");
     /*No extension*/
     private final static Pattern NO_EXTENSION = Pattern.compile("(^$|.*\\/[^(\\/\\.)]*$)");
     String crawlStorageFolder = "data/crawl/";
     String fetchFile = "fetch_nydailynews.csv";
     String visitFile = "visit_nydailynews.csv";
     String urlsFile = "urls_nydailynews.csv";
+    public static int count = 0;
 
 
 
@@ -38,7 +40,8 @@ public class MyCrawler extends WebCrawler {
     protected void handlePageStatusCode(WebURL webUrl, int statusCode, String statusDescription) {
         // Do nothing by default
         // Sub-classed can override this to add their custom functionality
-//        String url = webUrl.getURL().toLowerCase();
+        //String url = webUrl.getURL().toLowerCase();
+        count++;
         try{
             synchronized(this){
                 BufferedWriter bw = new BufferedWriter(new FileWriter(crawlStorageFolder+fetchFile,true));
@@ -80,8 +83,8 @@ public class MyCrawler extends WebCrawler {
             return false;
         if(NO_EXTENSION.matcher(href).matches())
             return true;
-        return (href.startsWith("http://"+Controller.targetSite) || (href.startsWith("https://"+Controller.targetSite)))
-                && MATCH.matcher(href).matches();
+        return !FILTERS.matcher(href).matches();
+                //&&(href.startsWith("http://"+Controller.targetSite) || (href.startsWith("https://"+Controller.targetSite)));
     }
 
     @Override
