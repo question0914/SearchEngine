@@ -16,7 +16,7 @@ import java.util.regex.Pattern;
  */
 public class MyCrawler extends WebCrawler {
     private final static Pattern MATCH = Pattern.compile(".*(\\.(html|doc|pdf|gif|jpg|jpeg|png|bmp))$");
-    private final static Pattern FILTERS = Pattern.compile(".*((css|feed|rss|svg|js|mp3|zip|gz|vcf|xml)).*");
+    private final static Pattern FILTERS = Pattern.compile(".*(css|feed|rss|svg|js|mp3|zip|gz|vcf|xml).*");
     String crawlStorageFolder = "data/crawl/";
     String fetchFile = "fetch_nydailynews.csv";
     String visitFile = "visit_nydailynews.csv";
