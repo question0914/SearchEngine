@@ -16,14 +16,13 @@ import java.util.regex.Pattern;
  */
 public class MyCrawler extends WebCrawler {
     private final static Pattern MATCH = Pattern.compile(".*(\\.(html|doc|pdf|gif|jpg|jpeg|png|bmp))$");
-    private final static Pattern FILTERS = Pattern.compile(".*((css|rss|js|mp3|zip|gz|vcf|xml)).*");
-    /*No extension*/
-    private final static Pattern NO_EXTENSION = Pattern.compile("(^$|.*\\/[^(\\/\\.)]*$)");
+    private final static Pattern FILTERS = Pattern.compile(".*((css|feed|rss|svg|js|mp3|zip|gz|vcf|xml)).*");
     String crawlStorageFolder = "data/crawl/";
     String fetchFile = "fetch_nydailynews.csv";
     String visitFile = "visit_nydailynews.csv";
     String urlsFile = "urls_nydailynews.csv";
     public static int count = 0;
+    public static int[] sizeCount = new int[5];
 
 
 
@@ -81,8 +80,8 @@ public class MyCrawler extends WebCrawler {
         }
         if(!(href.startsWith("http://"+Controller.targetSite) || (href.startsWith("https://"+Controller.targetSite))))
             return false;
-        if(NO_EXTENSION.matcher(href).matches())
-            return true;
+//        if(NO_EXTENSION.matcher(href).matches())
+//            return true;
         return !FILTERS.matcher(href).matches();
                 //&&(href.startsWith("http://"+Controller.targetSite) || (href.startsWith("https://"+Controller.targetSite)));
     }
@@ -92,11 +91,23 @@ public class MyCrawler extends WebCrawler {
         String url = page.getWebURL().getURL();
         System.out.println("URL: " + url);
         int size = page.getContentData().length;
+        int sizeKB = size/1024;
         int numOfOutlink = page.getParseData().getOutgoingUrls().size();
         String contentType = page.getContentType();
-        contentType = contentType.toLowerCase().indexOf("text/html") > -1 ? "text/html":contentType;
+        contentType = contentType.toLowerCase().indexOf(";") > -1
+                      ? contentType.replace(contentType.substring(contentType.indexOf(";"), contentType.length()), ""):contentType;
         try{
             synchronized (this){
+                if(sizeKB<1)
+                    sizeCount[0]++;
+                else if(1 <= sizeKB && sizeKB < 10)
+                    sizeCount[1]++;
+                else if(10 <= sizeKB && sizeKB < 100)
+                    sizeCount[2]++;
+                else if(100 <= sizeKB && sizeKB <1024)
+                    sizeCount[3]++;
+                else
+                    sizeCount[4]++;
                 BufferedWriter bw = new BufferedWriter(new FileWriter(crawlStorageFolder + visitFile, true));
                 bw.write(url.replace(",", "_") + "," + size + "," + numOfOutlink + "," + contentType +"\n");
                 bw.close();

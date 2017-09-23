@@ -20,10 +20,11 @@ public class Controller {
         String fetchFile = "fetch_nydailynews.csv";
         String visitFile = "visit_nydailynews.csv";
         String urlsFile = "urls_nydailynews.csv";
+        String countFile = "count.txt";
 
 
         /*Basic configuration of the crawler*/
-        int numberOfCrawlers = 7;
+        int numberOfCrawlers = 4;
         int maxPagesToFetch = 20000;
         int maxDepthOfCrawling = 16;
         int politeDelay = 1000;
@@ -70,6 +71,17 @@ public class Controller {
  /* Start the crawl. This is a blocking operation, meaning that your code
  * will reach the line after this only when crawling is finished. */
         controller.start(MyCrawler.class, numberOfCrawlers);
+        try{
+            BufferedWriter bw = new BufferedWriter(new FileWriter(crawlStorageFolder+countFile));
+            bw.write("< 1KB: "+MyCrawler.sizeCount[0]+"\n");
+            bw.write("1KB ~ <10KB: "+MyCrawler.sizeCount[1]+"\n");
+            bw.write("10KB ~ <100KB: "+MyCrawler.sizeCount[2]+"\n");
+            bw.write("100KB ~ <1MB: "+MyCrawler.sizeCount[3]+"\n");
+            bw.write(">= 1MB: "+MyCrawler.sizeCount[4]+"\n");
+            bw.close();
+        }catch (IOException e){
+            e.printStackTrace();
+        }
         System.out.println("Fethced attemps: "+MyCrawler.count);
     }
 }
