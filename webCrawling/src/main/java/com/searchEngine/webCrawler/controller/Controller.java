@@ -24,7 +24,7 @@ public class Controller {
 
 
         /*Basic configuration of the crawler*/
-        int numberOfCrawlers = 4;
+        int numberOfCrawlers = 7;
         int maxPagesToFetch = 20000;
         int maxDepthOfCrawling = 16;
         int politeDelay = 1000;
