@@ -3,7 +3,6 @@ characteristics of the crawl, download web pages from the crawl and gather webpa
 from New York Daily News: http://www.nydailynews.com/
 
 Using IntelliJ IDEA as IDE and crawler4j as web crawler.
-
 Some Crawling Statistics
 File Sizes:
 ===========
