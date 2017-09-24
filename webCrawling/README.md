@@ -18,4 +18,4 @@ File Sizes:
  
  100KB ~ <1MB: 2855
  
- >= 1MB: 0
+ 1MB ~ : 0
