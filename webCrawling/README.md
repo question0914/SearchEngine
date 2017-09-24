@@ -4,7 +4,7 @@ from New York Daily News: http://www.nydailynews.com/
 
 Using IntelliJ IDEA as IDE and crawler4j as web crawler.
 
-Some Crawling Statistics
+#Some Crawling Statistics
 File Sizes:
 ===========
 < 1KB: 3
