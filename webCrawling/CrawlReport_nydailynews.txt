@@ -1,0 +1,38 @@
+Name: Zijian Li
+USC ID: 6808755877
+News site crawled: http://www.nydailynews.com/
+Fetch Statistics
+================
+# fetches attempted: 20000
+# fetches succeeded: 19575
+# fetches aborted/failed: 425
+Outgoing URLs:
+==============
+Total URLs extracted: 2039832
+# unique URLs extracted: 165259
+# unique URLs within News Site: 24799
+# unique URLs outside News Site: 140460
+Status Codes:
+=============
+200 OK: 19575
+301 Moved Permanently: 397
+302 URL Redirection: 1
+400 Bad Request: 1 
+401 Unauthorized: 0
+403 Forbidden: 0
+404 Not Found: 17
+410 Gone: 9
+File Sizes:
+===========
+< 1KB: 3
+1KB ~ <10KB: 1
+10KB ~ <100KB: 16716
+100KB ~ <1MB: 2855
+>= 1MB: 0
+Content Types:
+==============
+text/html: 19571
+image/gif: 0
+image/jpeg: 1
+image/png: 3
+application/pdf: 0
