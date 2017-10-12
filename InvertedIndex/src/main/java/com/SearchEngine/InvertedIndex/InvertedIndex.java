@@ -16,8 +16,8 @@ import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 /**
  * Created by zijianli on 10/11/17.
  */
-public class WordCount {
-    public static class WordCountMapper
+public class InvertedIndex {
+    public static class InvertedIndexMapper
             extends Mapper<Object, Text, Text, IntWritable>{
 
         private final static IntWritable one = new IntWritable(1);
@@ -33,7 +33,7 @@ public class WordCount {
         }
     }
 
-    public static class WordCountReducer
+    public static class InvertedIndexReducer
             extends Reducer<Text,IntWritable,Text,IntWritable> {
         private IntWritable result = new IntWritable();
 
@@ -52,10 +52,10 @@ public class WordCount {
     public static void main(String[] args) throws Exception {
         Configuration conf = new Configuration();
         Job job = Job.getInstance(conf, "word count");
-        job.setJarByClass(WordCount.class);
-        job.setMapperClass(WordCountMapper.class);
-        job.setCombinerClass(WordCountReducer.class);
-        job.setReducerClass(WordCountReducer.class);
+        job.setJarByClass(InvertedIndex.class);
+        job.setMapperClass(InvertedIndexMapper.class);
+        job.setCombinerClass(InvertedIndexReducer.class);
+        job.setReducerClass(InvertedIndexReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(IntWritable.class);
         FileInputFormat.addInputPath(job, new Path(args[0]));
