@@ -43,7 +43,7 @@ public class ExtractLinkes {
             for(Element link : links){
                 String url = link.attr("abs:href").trim();
                 if(urlFileMap.containsKey(url)){
-                    edges.add(file.getName() + " " + urlFileMap.get(url));
+                    edges.add("/Users/zijianli/Documents/solr-7.1.0/NYD/"+file.getName() + " " + "/Users/zijianli/Documents/solr-7.1.0/NYD/"+urlFileMap.get(url));
                 }
             }
         }
