@@ -4,11 +4,11 @@ header('Content-Type: text/html; charset=utf-8');
 $limit = 10;
 $query = isset($_REQUEST['q']) ? $_REQUEST['q'] : false;
 $results = false;
-$map_file = fopen('NYD Map.csv', 'r');
-$url_set = array();
-while (($line = fgetcsv($map_file)) !== FALSE) {
-    $url_set[$line[0]] = $line[1];
-}
+//$map_file = fopen('NYD Map.csv', 'r');
+//$url_set = array();
+//while (($line = fgetcsv($map_file)) !== FALSE) {
+//    $url_set[$line[0]] = $line[1];
+//}
 if ($query)
 {
     // The Apache Solr Client library should be on the include path
@@ -29,7 +29,11 @@ if ($query)
     // problems or a query parsing error)
     try
     {
+        $additionalPara = array('sort' => 'pageRankFile desc');
+        $pr_results = $solr->search($query, 0, $limit, $additionalPara);
         $results = $solr->search($query, 0, $limit);
+//        $additionalPara = array('sort' => 'pageRankFile desc');
+//        $pr_results = $solr->search($query, 0, $limit, $additionalPara);
     }
     catch (Exception $e)
     {
@@ -42,7 +46,7 @@ if ($query)
 ?>
 <html>
 <head>
-    <title>PHP Solr Client Example</title>
+    <title>Solr vs PageRank Searching</title>
     <style>
         a:link {
             color: mediumblue;
@@ -74,6 +78,10 @@ if ($results)
     $total = (int) $results->response->numFound;
     $start = min(1, $total);
     $end = min($limit, $total);
+
+    $pr_total = (int) $pr_results->response->numFound;
+    $pr_start = min(1, $pr_total);
+    $pr_end = min($limit, $pr_total);
     ?>
     <table>
         <td width="50%" valign="top">
@@ -104,13 +112,15 @@ if ($results)
                                 if($field == "description"){
                                     $description = htmlspecialchars($value, ENT_NOQUOTES, 'utf-8');
                                 }
-                                if($id != ""){
-                                    $url = $url_set[str_replace("/Users/zijianli/Documents/solr-7.1.0/NYD/", "", $id)];
+                                if($field == "og_url"){
+                                    $url = htmlspecialchars($value, ENT_NOQUOTES, 'utf-8');
                                 }
+                                if($url == "")
+                                    $url = "N/A";
                             }
 
                             echo "<a href = '{$url}'><h2>".$title."</h2></a>";
-                            echo "Link: <a href = '{$url}'>".$url."</a></br></br>";
+                            echo "URL: <a href = '{$url}'>".$url."</a></br></br>";
                             echo "Id: ".$id. "</br></br>";
                             echo "Description: ".$description."</br></br>";
                             ?>
@@ -123,6 +133,50 @@ if ($results)
         </td>
         <td width="50%" valign="top">
             <h2>Page Rank Results</h2>
+            <div>Results <?php echo $pr_start; ?> - <?php echo $pr_end;?> of <?php echo $pr_total; ?>:</div>
+            <ol>
+                <?php
+                // iterate result documents
+                foreach ($pr_results->response->docs as $doc)
+                {
+                    ?>
+                    <li>
+                        <div>
+                            <?php
+                            // iterate document fields / values
+                            $pr_title = "";
+                            $pr_id = "";
+                            $pr_url = "";
+                            $pr_description = "";
+                            foreach ($doc as $field => $value)
+                            {
+                                if($field == "title"){
+                                    $pr_title = htmlspecialchars($value, ENT_NOQUOTES, 'utf-8');
+                                }
+                                if($field == "id"){
+                                    $pr_id = htmlspecialchars($value, ENT_NOQUOTES, 'utf-8');
+                                }
+                                if($field == "description"){
+                                    $pr_description = htmlspecialchars($value, ENT_NOQUOTES, 'utf-8');
+                                }
+                                if($field == "og_url"){
+                                    $pr_url = htmlspecialchars($value, ENT_NOQUOTES, 'utf-8');
+                                }
+                                if($pr_url == "")
+                                    $pr_url = "N/A";
+                            }
+
+                            echo "<a href = '{$pr_url}'><h2>".$pr_title."</h2></a>";
+                            echo "URL: <a href = '{$pr_url}'>".$pr_url."</a></br></br>";
+                            echo "Id: ".$pr_id. "</br></br>";
+                            echo "Description: ".$pr_description."</br></br>";
+                            ?>
+                        </div>
+                    </li>
+                    <?php
+                }
+                ?>
+            </ol>
         </td>
     </table>
     <?php
