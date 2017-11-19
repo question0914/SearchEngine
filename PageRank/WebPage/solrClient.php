@@ -32,30 +32,32 @@ if ($query)
     // problems or a query parsing error)
     try
     {
-//        $queryterms = explode(" ",$query);
-//        $original_query = $query;
-//        $query = "";
-//        $flag = 0;
-//        $fg =isset($_REQUEST['f']) ? true : false;
-//        if($fg == false){
-//            foreach($queryterms as $term){
-//                $t = SpellCorrector::correct($term);
-//                $t = SpellCorrector::correct($term);
-//                if(trim(strtolower($t)) != trim(strtolower($term))){
-//                    $flag = 1;
-//                }
-//                $query = $query." ".$t;
-//            }
-//            $query = trim($query);
-//        }else{
-//            $query = $original_query;
-//        }
-
-        $additionalPara = array('sort' => 'pageRankFile desc');
-        $pr_results = $solr->search($query, 0, $limit, $additionalPara);
-        $results = $solr->search($query, 0, $limit);
-
-
+        $query = strtolower($query);
+        $terms = explode(" ",$query);
+        $correct_terms = array();
+        $spell_error = false;
+        $flag =isset($_REQUEST['f']) ? true : false;
+        if($flag == false){
+            for($i=0;$i<sizeof($terms);++$i){
+                $term = $terms[$i];
+                $correct_term = strtolower(SpellCorrector::correct($term));
+                if($term != $correct_term){
+                    $spell_error = true;
+                }
+                array_push($correct_terms,$correct_term);
+            }
+            if($spell_error){
+                $correct_terms = implode(" ",$correct_terms);
+                $additionalPara = array('sort' => 'pageRankFile desc');
+                $pr_results = $solr->search($correct_terms, 0, $limit, $additionalPara);
+                $results = $solr->search($correct_terms, 0, $limit);
+            }
+            else{
+                $additionalPara = array('sort' => 'pageRankFile desc');
+                $pr_results = $solr->search($query, 0, $limit, $additionalPara);
+                $results = $solr->search($query, 0, $limit);
+            }
+        }
     }
     catch (Exception $e)
     {
@@ -84,43 +86,29 @@ if ($query)
         a:hover {
             text-decoration: underline;
         }
+        .point{
+            font-size: 20px;
+        }
     </style>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 </head>
 <body>
 <form class = "point" accept-charset="utf-8" method="get" >
     <label for="q">Search:</label>
-    <input id="q"  name="q" type="text" value="<?php echo htmlspecialchars($query, ENT_QUOTES, 'utf-8'); ?>" style="width: 500px;"/>
-    <input type="submit" value="GO!">
+    <input id="q"  name="q" type="text" value="<?php echo htmlspecialchars($query, ENT_QUOTES, 'utf-8'); ?>" onkeyup="autoCompletion(this.value,event)" style="width: 500px; font-size: 20px;"/>
+    <input id="go" type="submit" value="GO!" style="font-size: 20px">
 </form>
 
 <?php
 if($query){
-    $query = strtolower($query);
-    $terms = explode(" ",$query);
-    $correct_terms = array();
-    $spell_error = false;
-    $flag =isset($_REQUEST['f']) ? true : false;
-    if($flag == false){
-        for($i=0;$i<sizeof($terms);++$i){
-            $term = $terms[$i];
-            $correct_term = strtolower(SpellCorrector::correct($term));
-            if($term != $correct_term){
-                $spell_error = true;
-            }
-            array_push($correct_terms,$correct_term);
-        }
-        if($spell_error){
-            $correct_terms = implode(" ",$correct_terms);
-            ?>
-            <h2> Showing results for: <a href="solrClient.php?q=<?=$correct_terms?>"><?= $correct_terms; ?></a></h2>
-            <?php
+    if($spell_error){
+        ?>
+        <h2> Showing results for: <a href="solrClient.php?q=<?=$correct_terms?>"><?= $correct_terms; ?></a></h2>
+        <?php
 
-        }
     }
-
 }
 ?>
-
 <table>
 <?php
 // display results
@@ -133,8 +121,6 @@ if ($results)
     $pr_total = (int) $pr_results->response->numFound;
     $pr_start = min(1, $pr_total);
     $pr_end = min($limit, $pr_total);
-
-
     ?>
     <table>
         <td width="50%" valign="top">
@@ -241,5 +227,40 @@ if ($results)
     <?php
 }
 ?>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <!-- AutoComplete-->
+    <script>
+        function autoCompletion(input, e) {
+            var URL_prefix = "http://127.0.0.1:8983/solr/myexample/suggest?q=";
+            var terms = input.split(" ");
+            var search_term = terms[terms.length-1].toLowerCase();
+            var URL = URL_prefix + search_term;
+            $("#q").autocomplete({
+                source : function(request,response) {
+                    $.ajax({
+                        type: "GET",
+                        url: URL,
+                        dataType: "jsonp", //Cross-domain
+                        success : function(res) {
+                            var suggestions=res["suggest"]["suggest"][search_term]["suggestions"];
+                            var suggestions_list = [];
+                            for(var i = 0; i < 5; i++){
+                                suggestions_list.push(input.substr(0,input.lastIndexOf(" ")+1) + suggestions[i]["term"]);
+                            }
+                            response(suggestions_list);
+                        },
+                        jsonp: 'json.wrf'
+                    });
+                },
+                minLength: 1
+            });
+            if (event.keyCode == "13") {
+                $('#go').click();
+            }
+        }
+    </script>
 </body>
 </html>
