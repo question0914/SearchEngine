@@ -1,21 +1,24 @@
 <?php
+ini_set('memory_limit', '-1');
+ini_set('max_execution_time', '0');
+include 'SpellCorrector.php';
 // make sure browsers see this page as utf-8 encoded HTML
 header('Content-Type: text/html; charset=utf-8');
 $limit = 10;
 $query = isset($_REQUEST['q']) ? $_REQUEST['q'] : false;
 $results = false;
-//$map_file = fopen('NYD Map.csv', 'r');
-//$url_set = array();
-//while (($line = fgetcsv($map_file)) !== FALSE) {
-//    $url_set[$line[0]] = $line[1];
-//}
+$map_file = fopen('NYD Map.csv', 'r');
+$url_set = array();
+while (($line = fgetcsv($map_file)) !== FALSE) {
+    $url_set[$line[0]] = $line[1];
+}
 if ($query)
 {
     // The Apache Solr Client library should be on the include path
     // which is usually most easily accomplished by placing in the
     // same directory as this script ( . or current directory is a default
     // php include path entry in the php.ini)
-    require_once('Apache/Solr/Service.php');
+    require_once('solr-php-client/Apache/Solr/Service.php');
     // create a new solr service instance - host, port, and corename
     // path (all defaults in this example)
     $solr = new Apache_Solr_Service('localhost', 8983, '/solr/myexample/');
@@ -29,11 +32,30 @@ if ($query)
     // problems or a query parsing error)
     try
     {
+//        $queryterms = explode(" ",$query);
+//        $original_query = $query;
+//        $query = "";
+//        $flag = 0;
+//        $fg =isset($_REQUEST['f']) ? true : false;
+//        if($fg == false){
+//            foreach($queryterms as $term){
+//                $t = SpellCorrector::correct($term);
+//                $t = SpellCorrector::correct($term);
+//                if(trim(strtolower($t)) != trim(strtolower($term))){
+//                    $flag = 1;
+//                }
+//                $query = $query." ".$t;
+//            }
+//            $query = trim($query);
+//        }else{
+//            $query = $original_query;
+//        }
+
         $additionalPara = array('sort' => 'pageRankFile desc');
         $pr_results = $solr->search($query, 0, $limit, $additionalPara);
         $results = $solr->search($query, 0, $limit);
-//        $additionalPara = array('sort' => 'pageRankFile desc');
-//        $pr_results = $solr->search($query, 0, $limit, $additionalPara);
+
+
     }
     catch (Exception $e)
     {
@@ -44,7 +66,7 @@ if ($query)
     }
 }
 ?>
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 <head>
     <title>Solr vs PageRank Searching</title>
     <style>
@@ -65,11 +87,40 @@ if ($query)
     </style>
 </head>
 <body>
-<form accept-charset="utf-8" method="get">
+<form class = "point" accept-charset="utf-8" method="get" >
     <label for="q">Search:</label>
-    <input id="q" name="q" type="text" value="<?php echo htmlspecialchars($query, ENT_QUOTES, 'utf-8'); ?>"/>
-    <input type="submit">
+    <input id="q"  name="q" type="text" value="<?php echo htmlspecialchars($query, ENT_QUOTES, 'utf-8'); ?>" style="width: 500px;"/>
+    <input type="submit" value="GO!">
 </form>
+
+<?php
+if($query){
+    $query = strtolower($query);
+    $terms = explode(" ",$query);
+    $correct_terms = array();
+    $spell_error = false;
+    $flag =isset($_REQUEST['f']) ? true : false;
+    if($flag == false){
+        for($i=0;$i<sizeof($terms);++$i){
+            $term = $terms[$i];
+            $correct_term = strtolower(SpellCorrector::correct($term));
+            if($term != $correct_term){
+                $spell_error = true;
+            }
+            array_push($correct_terms,$correct_term);
+        }
+        if($spell_error){
+            $correct_terms = implode(" ",$correct_terms);
+            ?>
+            <h2> Showing results for: <a href="solrClient.php?q=<?=$correct_terms?>"><?= $correct_terms; ?></a></h2>
+            <?php
+
+        }
+    }
+
+}
+?>
+
 <table>
 <?php
 // display results
@@ -82,6 +133,8 @@ if ($results)
     $pr_total = (int) $pr_results->response->numFound;
     $pr_start = min(1, $pr_total);
     $pr_end = min($limit, $pr_total);
+
+
     ?>
     <table>
         <td width="50%" valign="top">
@@ -112,11 +165,14 @@ if ($results)
                                 if($field == "description"){
                                     $description = htmlspecialchars($value, ENT_NOQUOTES, 'utf-8');
                                 }
-                                if($field == "og_url"){
-                                    $url = htmlspecialchars($value, ENT_NOQUOTES, 'utf-8');
+                                if($id != ""){
+                                    $url = $url_set[str_replace("/Users/zijianli/Documents/solr-7.1.0/NYD/", "", $id)];
                                 }
-                                if($url == "")
-                                    $url = "N/A";
+//                                if($field == "og_url"){
+//                                    $url = htmlspecialchars($value, ENT_NOQUOTES, 'utf-8');
+//                                }
+//                                if($url == "")
+//                                    $url = "N/A";
                             }
 
                             echo "<a href = '{$url}'><h2>".$title."</h2></a>";
@@ -159,11 +215,14 @@ if ($results)
                                 if($field == "description"){
                                     $pr_description = htmlspecialchars($value, ENT_NOQUOTES, 'utf-8');
                                 }
-                                if($field == "og_url"){
-                                    $pr_url = htmlspecialchars($value, ENT_NOQUOTES, 'utf-8');
+                                if($pr_id != ""){
+                                    $pr_url = $url_set[str_replace("/Users/zijianli/Documents/solr-7.1.0/NYD/", "", $id)];
                                 }
-                                if($pr_url == "")
-                                    $pr_url = "N/A";
+//                                if($field == "og_url"){
+//                                    $pr_url = htmlspecialchars($value, ENT_NOQUOTES, 'utf-8');
+//                                }
+//                                if($pr_url == "")
+//                                    $pr_url = "N/A";
                             }
 
                             echo "<a href = '{$pr_url}'><h2>".$pr_title."</h2></a>";

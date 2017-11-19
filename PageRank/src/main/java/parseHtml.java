@@ -1,12 +1,16 @@
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.html.HtmlParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.SAXException;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 /**
@@ -17,6 +21,8 @@ public class parseHtml {
         String htmlPath = "/Users/zijianli/Downloads/NYD/NYD";
         File dir = new File(htmlPath);
         int count = 0;
+//        String regEx="[`~!@#$%^&*()+=|{}':.;',//[//]<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？©]";
+//        Pattern p   =   Pattern.compile(regEx);
         List<String> log = new ArrayList<String>();
         for(File file: dir.listFiles()){
             if(!(file.getName().contains("html")))
@@ -24,10 +30,19 @@ public class parseHtml {
             count++;
             System.out.println(count);
             BodyContentHandler handler = new BodyContentHandler(-1);
-            AutoDetectParser parser = new AutoDetectParser();
             Metadata metadata = new Metadata();
             InputStream stream = new FileInputStream(file);
-            parser.parse(stream, handler, metadata);
+            ParseContext pcontext = new ParseContext();
+            HtmlParser htmlparser = new HtmlParser();
+            htmlparser.parse(stream, handler, metadata,pcontext);
+            //parser.parse(stream, handler, metadata);
+//            String[] words = handler.toString().trim().split("\\s+");
+//            String str = "";
+//            for(String w: words){
+//                Matcher m   =   p.matcher(w);
+//                if(!(m.replaceAll("").trim().equals("")))
+//                    str = str + m.replaceAll("").trim() + "\n";
+//            }
             log.add(handler.toString());
         }
 
