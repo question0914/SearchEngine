@@ -1,7 +1,8 @@
 <?php
 ini_set('memory_limit', '-1');
-ini_set('max_execution_time', '0');
+//ini_set('max_execution_time', '0');
 include 'SpellCorrector.php';
+include 'simple_html_dom.php';
 // make sure browsers see this page as utf-8 encoded HTML
 header('Content-Type: text/html; charset=utf-8');
 $limit = 10;
@@ -48,6 +49,7 @@ if ($query)
             }
             if($spell_error){
                 $correct_terms = implode(" ",$correct_terms);
+                $query = $correct_terms;
                 $additionalPara = array('sort' => 'pageRankFile desc');
                 $pr_results = $solr->search($correct_terms, 0, $limit, $additionalPara);
                 $results = $solr->search($correct_terms, 0, $limit);
@@ -88,6 +90,14 @@ if ($query)
         }
         .point{
             font-size: 20px;
+        }
+        .snippet{
+            font-weight:bold;
+        }
+        .italian{
+            font-style: italic;
+            font-size: 20px;
+            /*color: #525D76;*/
         }
     </style>
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
@@ -165,6 +175,72 @@ if ($results)
                             echo "URL: <a href = '{$url}'>".$url."</a></br></br>";
                             echo "Id: ".$id. "</br></br>";
                             echo "Description: ".$description."</br></br>";
+
+                            $content = file_get_html($url)->plaintext;
+                            $sentences = preg_split('/(\.|<br>)/',$content);
+                            $words = explode(" ", $query);
+                            $snippet = "";
+                            $all_query = "/";
+                            $start_delim = "(?=.*?\b";
+                            $end_delim = "\b)";
+                            foreach($words as $item){
+                                $all_query = $all_query.$start_delim.$item.$end_delim;
+                            }
+                            $all_query=$all_query."^.*$/i";
+                            //Try match whole query
+                            foreach($sentences as $sentence){
+                                if(preg_match($all_query, $sentence)>0){
+                                    $index = stripos($content, $sentence);
+                                    $sen_length = strlen($sentence);
+                                    if($sen_length >= 160){
+                                        $snippet = $sentence;
+                                        break;
+                                    }
+                                    $rest = 160 - $sen_length;
+                                    $start_index = max(0,$index - (int)($rest/2));
+                                    while($start_index > 0){
+                                        if($content[$start_index] == ' ')
+                                            break;
+                                        $start_index = $start_index-1;
+                                    }
+                                    $end_index = min($start_index + 155, strlen($content)-1);
+                                    while($end_index < strlen($content)){
+                                        if($content[$end_index] == ' ')
+                                            break;
+                                        $end_index = $end_index+1;
+                                    }
+                                    $snippet = substr($content,$start_index,$end_index - $start_index);
+                                    break;
+                                }
+                            }
+
+                            if(strlen($snippet) < 2){
+                                foreach($words as $word){
+                                    if(stripos($content, $word) != false) {
+                                        $index = stripos($content, $word);
+                                        $index += 1;//adjust for one whitespace
+                                        $start_index = max(0,$index - 80);
+                                        while($start_index != 0){
+                                            if($content[$start_index] == ' ')
+                                                break;
+                                            $start_index = $start_index-1;
+                                        }
+                                        $end_index = min($start_index + 155, strlen($content)-1);
+                                        while($end_index < strlen($content)){
+                                            if($content[$end_index] == ' ')
+                                                break;
+                                            $end_index = $end_index+1;
+                                        }
+                                        $snippet = substr($content,$start_index,$end_index - $start_index);
+                                        break;
+                                    }
+                                }
+                            }
+
+                            foreach($words as $word){
+                                $snippet = preg_replace('/\b'.$word.'/i',"<span class='snippet'>\$0</span>",$snippet);
+                            }
+                            echo "<div class = italian>...".$snippet."...</div>";
                             ?>
                         </div>
                     </li>
@@ -202,7 +278,7 @@ if ($results)
                                     $pr_description = htmlspecialchars($value, ENT_NOQUOTES, 'utf-8');
                                 }
                                 if($pr_id != ""){
-                                    $pr_url = $url_set[str_replace("/Users/zijianli/Documents/solr-7.1.0/NYD/", "", $id)];
+                                    $pr_url = $url_set[str_replace("/Users/zijianli/Documents/solr-7.1.0/NYD/", "", $pr_id)];
                                 }
 //                                if($field == "og_url"){
 //                                    $pr_url = htmlspecialchars($value, ENT_NOQUOTES, 'utf-8');
@@ -215,6 +291,66 @@ if ($results)
                             echo "URL: <a href = '{$pr_url}'>".$pr_url."</a></br></br>";
                             echo "Id: ".$pr_id. "</br></br>";
                             echo "Description: ".$pr_description."</br></br>";
+
+                            $content = file_get_html($pr_url)->plaintext;
+                            $sentences = preg_split('/(\.|<br>)/',$content);
+                            //$words = explode(" ", $query);
+                            $snippet = "";
+                            //Try match whole query
+                            foreach($sentences as $sentence){
+                                if(preg_match($all_query, $sentence)>0){
+                                    $index = stripos($content, $sentence);
+                                    $sen_length = strlen($sentence);
+                                    if($sen_length >= 160){
+                                        $snippet = $sentence;
+                                        break;
+                                    }
+                                    $rest = 160 - $sen_length;
+                                    $start_index = max(0,$index - (int)($rest/2));
+                                    while($start_index != 0){
+                                        if($content[$start_index] == ' ')
+                                            break;
+                                        $start_index = $start_index-1;
+                                    }
+                                    $end_index = min($start_index + 155, strlen($content)-1);
+                                    while($end_index < strlen($content)){
+                                        if($content[$end_index] == ' ')
+                                            break;
+                                        $end_index = $end_index+1;
+                                    }
+                                    $snippet = substr($content,$start_index,$end_index - $start_index);
+                                    break;
+                                }
+                            }
+
+
+                            if(strlen($snippet) < 2){
+                                foreach($words as $word){
+                                    if(stripos($content, $word) != false) {
+                                        $index = stripos($content, $word);
+                                        $index += 1;//adjust for one whitespace
+                                        $start_index = max(0,$index - 80);
+                                        while($start_index != 0){
+                                            if($content[$start_index] == ' ')
+                                                break;
+                                            $start_index = $start_index-1;
+                                        }
+                                        $end_index = min($start_index + 155, strlen($content)-1);
+                                        while($end_index < strlen($content)){
+                                            if($content[$end_index] == ' ')
+                                                break;
+                                            $end_index = $end_index+1;
+                                        }
+                                        $snippet = substr($content,$start_index,$end_index - $start_index);
+                                        break;
+                                    }
+                                }
+                            }
+                            foreach($words as $word){
+                                $snippet = preg_replace('/'.$word.'/i',"<span class='snippet'>\$0</span>",$snippet);
+                            }
+                            echo "<div class = italian>...".$snippet."...</div>";
+
                             ?>
                         </div>
                     </li>
@@ -239,11 +375,13 @@ if ($results)
             var search_term = terms[terms.length-1].toLowerCase();
             var URL = URL_prefix + search_term;
             $("#q").autocomplete({
+                minLength: 1,
                 source : function(request,response) {
                     $.ajax({
                         type: "GET",
                         url: URL,
                         dataType: "jsonp", //Cross-domain
+                        jsonp: 'json.wrf',
                         success : function(res) {
                             var suggestions=res["suggest"]["suggest"][search_term]["suggestions"];
                             var suggestions_list = [];
@@ -251,11 +389,9 @@ if ($results)
                                 suggestions_list.push(input.substr(0,input.lastIndexOf(" ")+1) + suggestions[i]["term"]);
                             }
                             response(suggestions_list);
-                        },
-                        jsonp: 'json.wrf'
+                        }
                     });
-                },
-                minLength: 1
+                }
             });
             if (event.keyCode == "13") {
                 $('#go').click();
