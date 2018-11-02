@@ -16,7 +16,7 @@ import java.io.IOException;
 public class Controller {
     public final static String targetSite = "www.nydailynews.com/";
     public static void main(String[] args) throws Exception {
-        String crawlStorageFolder = "data/crawl/";
+        String crawlStorageFolder = "dat/crawl/";
         String fetchFile = "fetch_nydailynews.csv";
         String visitFile = "visit_nydailynews.csv";
         String urlsFile = "urls_nydailynews.csv";
